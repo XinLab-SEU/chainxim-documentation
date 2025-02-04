@@ -1,0 +1,31 @@
+site_name: ChainXim Documentation
+
+theme:
+  name: material
+  language: zh
+  features:
+    - content.math
+
+plugins:
+  - search
+  - i18n:
+      languages:
+        - locale: en
+          name: English
+          build: true
+        - locale: zh
+          name: 简体中文
+          default: true
+          build: true
+
+markdown_extensions:
+  - tables
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  
+
