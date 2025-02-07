@@ -3,7 +3,7 @@
 ## Framework
 ChainXim is mainly composed of six components: Environment, Miner, Adversary, Network, Consensus, and Blockchain. Among them, the three major components, Consensus, Adversary, and Network, are configurable and replaceable to adapt to different types of consensus protocols, attack vectors, and network models. The relationships between the six abstract components are shown in the figure below:
 
-![framework](framework.svg)
+![framework](doc/framework.svg)
 
 Each abstract component is implemented by one or more corresponding classes. The Consensus class and the Network class corresponding to Consensus and Network are only abstract classes, and functional classes need to be derived to implement various consensus protocols and network models.
 
@@ -15,44 +15,44 @@ Currently implemented consensus protocols (all options available for the consens
 
 Currently implemented network models (all options available for the network_type configuration):
 
-| Network Class (Derived from Network)     | Description                                       |
-| ---------------------------------------- | ------------------------------------------------- |
-| network.SynchronousNetwork               | Synchronous Network Model                         |
-| network.DeterPropNetwork                 | Network Model Based on Propagation Vector         |
-| network.StochPropNetwork                 | Network Model with Bounded Delay and Increasing Reception Probability with Rounds |
-| network.TopologyNetwork                  | Complex Topology Network Model, Can Generate Random Networks |
+| Network Class (Derived from Network) | Description                                                  |
+| ------------------------------------ | ------------------------------------------------------------ |
+| network.SynchronousNetwork           | Synchronous Network Model                                    |
+| network.DeterPropNetwork             | Network Model Based on Propagation Vector                    |
+| network.StochPropNetwork             | Network Model with Bounded Delay and Increasing Receiving Probability with Rounds |
+| network.TopologyNetwork              | Complex network model, the topology can be randomly generated. |
 
 Environment is the core of the simulator. Users execute the main program in main.py to start the simulation. The main program initializes the Environment object according to the simulation parameters, calls `exec` to start the simulation loop, and calls `view_and_write` to generate the simulation results and write them to the Results folder after the simulation ends.
 
-ChainXim discretizes time, abstracting it into "rounds" to simulate the behavior of each node in units of rounds. Each round sequentially activates miner nodes to perform consensus operations. After all nodes have been activated once, the `diffuse` method in the network class is called to transmit messages between miner nodes. (See **Environment & Model Assumptions** section for details)
+ChainXim discretizes time, abstracting it into "rounds" to simulate the behavior of each node in units of rounds. Each round sequentially activates miners to perform consensus operations. After all nodes have been activated once, the `diffuse` method in the network class is called to transmit messages between miner nodes. (See **Environment & Model Assumptions** section for details)
 
 
 ## Environment & Model Assumptions
-The Environment component is the cornerstone of the ChainXim program, primarily responsible for the architecture of the simulator system model to interface with the other five major components. It also defines some key parameters in the simulator and encapsulates some functions needed by various components of the simulator. To facilitate understanding of this part, the model assumptions of ChainXim will be introduced first.
+The Environment component is the cornerstone of the ChainXim program, supporting the architecture of the simulator system model to interface with the other five major components. It also defines some key parameters in the simulator and encapsulates some functions needed by the other components of the simulator. To facilitate understanding of this part, the model assumptions of ChainXim will be introduced first.
 
 ### Model Assumptions
 The system model design of ChainXim mainly refers to the following paper:
 * J. A. Garay, A. Kiayias and N. Leonardos, "The bitcoin backbone protocol: Analysis and applications", Eurocrypt, 2015. <https://eprint.iacr.org/2014/765.pdf>
 
-ChainXim divides continuous time into discrete rounds, and all nodes in the network (including honest miners and dishonest attackers) will perform a certain number of operations in each round to compete for the accounting rights and generate and propagate new blocks. The total number of miners in the network is defined as n, among which t miners belong to dishonest attackers. In each round, all miners are awakened in sequence according to their numbers and take actions based on their identities. Honest miners will strictly follow the consensus protocol to generate blocks; attackers will choose to follow the protocol or launch attacks based on the actual situation. **Note that in each round, the attack module will only be triggered once, and each trigger will perform a complete attack action. In the current version, attackers will be randomly triggered when it is the turn of a miner belonging to the attackers in each round. Although the order of awakening of different miners is different, there is no actual order within the same round.**
+ChainXim divides continuous time into discrete rounds, and all nodes in the network (including honest miners and dishonest attackers) will perform a certain number of operations in each round to compete for the accounting rights and generate and propagate new blocks. The total number of miners in the network is defined as $n$, among which $t$ miners belong to dishonest attackers. In each round, all miners are awakened in sequence according to their numbers and take actions based on their identities. Honest miners will strictly follow the consensus protocol to generate blocks; attackers will choose to follow the protocol or launch attacks based on the actual situation. **Note that in each round, the attack module will only be triggered once, and each trigger will perform a complete attack action. In the current version, attackers will be randomly triggered when it is the turn of an attacker in each round. Although the order of awakening different miners is different, there is no actual order within the same round.**
 
-To simulate the specific operations of the above parties in the real blockchain system, ChainXim refers to two important methods proposed in the paper, namely the Random Oracle and Diffuse methods, which are specifically defined in ChainXim as follows:
-- **Random Oracle**: Taking the PoW consensus as an example, each miner can perform up to q actions in each round (the q value may be different for different miners), i.e., q opportunities to perform hash calculations. Each miner will perform q random query operations, i.e., input a random number into the hash function and verify whether the result is less than the given difficulty value. If the miner successfully finds a result lower than the difficulty value, it is considered that a block has been successfully generated. **Blocks generated by different miners in the same round are considered to be generated simultaneously.**
+To simulate the specific operations of the above parties in the real blockchain system, ChainXim refers to two important methods proposed in the paper, namely the Random Oracle and Diffuse methods, which are defined in ChainXim as follows:
+- **Random Oracle**: Taking the PoW consensus as an example, each miner can perform up to $q$ hash actions in each round (the $q$ value may be different for different miners), i.e., $q$ opportunities to perform hash calculations. Each miner will perform $q$ random oracle operations, i.e., input a random number into the hash function and verify whether the result is less than the given difficulty value. If the miner successfully finds a result lower than the target value, it is considered that a block has been successfully generated. **Blocks generated by different miners in the same round are considered to be generated simultaneously.**
 - **Diffuse**: When a miner generates a new block, it will upload this block to the network, and the network layer will be responsible for message propagation. The propagation logic will vary depending on the configuration of the network layer. In addition, attackers may choose not to upload the blocks they mined in the current round. Only blocks uploaded to the network layer will be propagated through this method. **In the ChainXim model, it is assumed that miners controlled by attackers have a dedicated communication channel independent of the blockchain system, i.e., once any miner belonging to the attackers receives a block, all miners under the attacker's control will receive the block in the next round.**
 
-**Note that the above Diffuse method mainly interfaces with the Network component, while the Random Oracle method interfaces with the Consensus component. The Random Oracle modeling was initially proposed for the PoW consensus protocol in Bitcoin. To make the simulator compatible with other consensus protocols, such as PBFT, which is based on interaction, ChainXim will consider overloading this method in the Consensus component in the future.**
+**Note that the above Diffuse method is implemented in the Network component, while the Random Oracle method is implemented in the Consensus component. The Random Oracle model was initially proposed for the PoW consensus protocol in Bitcoin. To make the simulator compatible with other consensus protocols, such as PBFT, which is a protocol based on interaction, ChainXim will consider overloading this method in the Consensus component in the future.**
 **The exec function in the Environment is set to complete the above two methods at once**: In each round, all miners will be awakened in sequence and perform the Random Oracle method: if the miner is honest, the exec function will call the Consensus component to perform related operations; if the attacker is activated, the Attacker component will be called to perform related operations (the Attacker component will only be called once in each round).
 When all miners have completed their actions, i.e., the round ends, the exec function will execute the Diffuse method in the Network component to propagate blocks in the network. A specific example is shown in the figure below:
 
-![environment](environment.png)
+![environment](doc/environment.png)
 
-In this example, n=4, t=1. When the k-th round (Round k) begins, the four miners will be awakened in sequence according to their numbers and complete their q actions. Among them, only Miner 2 successfully obtained the accounting rights and propagated the generated block (Diffuse method). Due to different propagation delays, Miner 1 and Miner 3 successfully received the block in round k+1, while Miner 4 received the block in round k+2. No miner completed block generation in round k+1. In round k+2, both Miner 1 and Miner 4 completed block generation, but Miner 4, being an attacker, adopted a selfish mining attack strategy, placing the block generated by the Random Oracle on a private chain and not propagating it to other miners during the Diffuse method. In round k+3, only Miner 4 completed block generation. At this point, in its view, its private chain is longer than the main chain, so it propagates the private chain to other miners through the Diffuse method, causing a fork in the blockchain. In the view of miners who received the private chain, the attacker's chain is the longest valid chain. In round k+4, if Miner 1 or Miner 2 did not receive the private chain and continued mining on the honest main chain, their interests might be harmed.
+In this example, $n=4$, $t=1$. When the k-th round (Round $k$) begins, the four miners will be awakened in sequence according to their numbers and complete their $q$ actions. Among them, only Miner 2 successfully obtained the accounting rights and propagated the generated block (Diffuse method). Due to different propagation delays, Miner 1 and Miner 3 successfully received the block in round k+1, while Miner 4 received the block in round k+2. No miner completed block generation in round k+1. In round k+2, both Miner 1 and Miner 4 completed block generation, but Miner 4, being an attacker, adopted a selfish mining attack strategy, placing the block generated by the Random Oracle on a private chain and not propagating it to other miners during the Diffuse method. In round k+3, only Miner 4 completed block generation. At this point, in its view, its private chain is longer than the main chain, so it propagates the private chain to other miners through the Diffuse method, causing a fork in the blockchain. In the view of miners who received the private chain, the attacker's chain is the longest valid chain. In round k+4, if Miner 1 or Miner 2 did not receive the private chain and continued mining on the honest main chain, their interests might be harmed.
 
 In summary, ChainXim effectively abstracts the generation and propagation of blocks in the blockchain network using discrete rounds and limited actions.
 
 ### Environment
 
-Overall, the Environment component completes the construction of the overall model. The initialization function sets the basic parameters according to the input parameters, calls other components for their respective initialization, sets n miners, selects t attackers, configures the global blockchain, network components, attack components, etc., for subsequent operation and evaluation. The main functions in the Environment component and their respective parameters are shown in the table below:
+Overall, the Environment component completes the construction of the overall model. The initialization function sets the basic parameters according to the input parameters, calls other components for their respective initialization, sets $n$ miners, selects $t$ attackers, configures the global blockchain, network components, attack components, etc., for subsequent operation and evaluation. The main functions in the Environment component and their respective parameters are shown in the table below:
 
 | Function | Parameters | Description |
 | -------- | -------- | -------- |
@@ -67,8 +67,8 @@ Overall, the Environment component completes the construction of the overall mod
 | view_and_write | - | Output the simulation results and save them in a txt file |
 | process_bar | - | Display the current simulation progress, outputting a real-time progress bar and percentage in the terminal |
 
-In the table above, envir_create_global_chain initializes and generates a global blockchain. After that, this chain will serve as the global blockchain tree and the global longest valid chain from a god's-eye view.
-The main program initializes the Environment object according to the simulation parameters, calls `exec` to start the simulation loop, and implements the random oracle method and diffusion method described in the paper. For attackers, the corresponding interface needs to be called through `attack_excute`. After the simulation ends, `view_and_write` is called to collect and output the simulation results.
+In the table above, envir_create_global_chain initializes and generates a global blockchain. After that, this chain will serve as the global blockchain tree and the global longest valid chain from a global view.
+The main program initializes the Environment object according to the simulation parameters, calls `exec` to start the simulation loop, and implements the random oracle method and diffusion method described in the paper. For attackers, the corresponding attacking operations needs to be executed through `attack_excute`. After the simulation ends, `view_and_write` is called to collect and output the simulation results.
 
 
 ## Miner
@@ -89,9 +89,9 @@ Considering the scalability of the simulator, the functions defined by the miner
 ## Chain Data
 
 
-This section introduces the basic data types in ChainXim. All block data generated during the simulation is described by data.BlockHead, data.Block, and data.Chain. The following figure shows the data structure of the blockchain in ChainXim. All Blocks are organized in a multi-branch tree, where each pair of parent and child nodes are bidirectionally linked through the parentblock and next attributes in Block. The root and end nodes of the tree are recorded in Chain.head and Chain.last_block, respectively. The Chain object in the figure contains a blockchain with a height of 2. Except for the genesis block `Block 0`, there are three blocks, with a fork occurring at block height 1. `Block 0 - Block 1 - Block 3` forms the main chain, and `Block 3` is the tail of the main chain.
+This section introduces the basic data types in ChainXim. All block data generated during the simulation is described by data.BlockHead, data.Block, and data.Chain. The following figure shows the data structure of the blockchain in ChainXim. All Blocks are organized in a multi-way tree, where each pair of parent and child nodes are bidirectionally linked through the parentblock and next attributes in Block. The root and end nodes of the tree are recorded in Chain.head and Chain.last_block, respectively. The Chain object in the figure contains a blockchain with a height of 2. Except for the genesis block `Block 0`, there are three blocks, with a fork occurring at block height 1. `Block 0 - Block 1 - Block 3` forms the main chain, and `Block 3` is the tail of the main chain.
 
-![blockhead-block-chain](blockhead-block-chain.svg)
+![blockhead-block-chain](doc/blockhead-block-chain.svg)
 
 ### Message
 Message is the base class for all messages generated by miners during mining. Currently, the main message is the Block. The attributes of Message currently only include the message length size, in MB.
@@ -100,14 +100,14 @@ Message is the base class for all messages generated by miners during mining. Cu
 
 BlockHead is used to define the data in the block header. data.BlockHead is an abstract base class, and its calculate_blockhash is an abstract method that needs to be defined in the consensus class by creating a new BlockHead and overriding calculate_blockhash. BlockHead only contains the attributes listed in the table below:
 
-| Attribute  | Type | Description                                                  |
-| ---------- | ---- | ------------------------------------------------------------ |
-| prehash    | bytes| Hash of the previous block                                    |
-| timestamp  | int  | Timestamp when the block was created                          |
-| content    | Any  | Data carried in the block, generally transaction information or Merkle Root in actual systems, but in this simulator, it is the round in which the block was generated |
-| miner      | int  | ID of the miner or attacker who generated the block           |
+| Attribute | Type  | Description                                                  |
+| --------- | ----- | ------------------------------------------------------------ |
+| prehash   | bytes | Hash of the previous block                                   |
+| timestamp | int   | Timestamp when the block was created                         |
+| content   | Any   | Data carried in the block, generally transaction information or Merkle Root in actual systems |
+| miner     | int   | ID of the miner or attacker who generated the block          |
 
-**Note: Since this simulator focuses more on the propagation of blocks in the network, the data stored in the blockchain (transactions, smart contracts, etc.) is abstracted using the content attribute. In the code implementation, content is assigned the value of the round in which the block was generated.**
+**Note: Since this simulator focuses more on the propagation of blocks in the network, the data stored in the blockchain (transactions, smart contracts, etc.) is abstracted using the content attribute.**
 
 ### Block
 
@@ -136,33 +136,33 @@ Finally, to enable the Block object to be transmitted in the Network, the Block 
 
 Chain is mainly used to store the root and end nodes of the blockchain and defines a series of functions needed to operate the blockchain. Chain contains the attributes listed in the table below:
 
-| Attribute   | Description                                                                 |
-| ----------- | --------------------------------------------------------------------------- |
-| head        | Stores the genesis block of the blockchain                                  |
-| last_block  | Reference to the end block of the main chain, which is the longest chain in the multi-branch tree for PoW systems |
-| miner_id    | The ID of the miner or attacker maintaining the blockchain, or None for the global blockchain |
+| Attribute  | Description                                                  |
+| ---------- | ------------------------------------------------------------ |
+| head       | Stores the genesis block of the blockchain                   |
+| last_block | Reference to the end block of the main chain, which is the longest chain in the multi-way tree for PoW systems |
+| miner_id   | The ID of the miner or attacker maintaining the blockchain, or None for the global blockchain |
 
 The Chain class has various methods that can be used to add new blocks, merge chains, search for blocks, visualize the blockchain, save blockchain data, and more, as shown in the table below:
 
-| Method                           | Input Parameters and Types                                          | Return Type  | Description                                                                 |
-| -------------------------------- | ------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------- |
-| search_block                     | block: Block                                                        | Block\|None  | Searches for the target block in the local block tree, returns the block if found, otherwise returns None |
-| search_block_by_hash             | blockhash: bytes                                                    | Block\|None  | Searches for the target block by hash in the local block tree, returns the block if found, otherwise returns None |
-| get_last_block                   | -                                                                   | Block        | Returns Chain.last_block                                                    |
-| set_last_block                   | block: Block                                                        | -            | Checks if the block is in the chain, then sets the block as last_block      |
-| add_blocks                       | blocks: Block \| list[block], <br />insert_point: Block             | Block        | Deep copies the block and adds it to the chain. Blocks can be of type list[Block] or Block, insert_point is the position to insert the block, starting from its back, default is last_block |
-| ShowStructure1                   | -                                                                   | -            | Prints the entire multi-branch tree with head as the root node to stdout    |
-| ShowStructure                    | miner_num:int                                                       | -            | Generates blockchain visualisation.svg, showing the round in which each block was generated and the parent-child relationship |
-| ShowStructureWithGraphviz        | -                                                                   | -            | Generates a blockchain visualization graph in the blockchain_visualization directory using Graphviz |
-| get_block_interval_distribution  | -                                                                   | -            | Generates a block interval distribution graph block interval distribution.svg |
-| printchain2txt                   | chain_data_url:int                                                  | -            | Saves the structure and information of all blocks in the chain to chain_data_url, default is 'Chain Data/chain_data.txt' |
-| CalculateStatistics              | rounds:int                                                          | dict         | Generates blockchain statistics and returns the statistics through a dictionary, rounds is the total number of simulation rounds |
+| Method                          | Input Parameters and Types                              | Return Type | Description                                                  |
+| ------------------------------- | ------------------------------------------------------- | ----------- | ------------------------------------------------------------ |
+| search_block                    | block: Block                                            | Block\|None | Searches for the target block in the local block tree, returns the block if found, otherwise returns None |
+| search_block_by_hash            | blockhash: bytes                                        | Block\|None | Searches for the target block by hash in the local block tree, returns the block if found, otherwise returns None |
+| get_last_block                  | -                                                       | Block       | Returns Chain.last_block                                     |
+| set_last_block                  | block: Block                                            | -           | Checks if the block is in the chain, then sets the block as last_block |
+| add_blocks                      | blocks: Block \| list[block], <br />insert_point: Block | Block       | Deep copies the block and adds it to the chain. Blocks can be of type list[Block] or Block, insert_point is the position to insert the block, starting from its back, default is last_block |
+| ShowStructure1                  | -                                                       | -           | Prints the entire multi-way tree with head as the root node to stdout |
+| ShowStructure                   | miner_num:int                                           | -           | Generates blockchain visualisation.svg, showing the round in which each block was generated and the parent-child relationship |
+| ShowStructureWithGraphviz       | -                                                       | -           | Generates a blockchain visualization graph in the blockchain_visualization directory using Graphviz |
+| get_block_interval_distribution | -                                                       | -           | Generates a block interval distribution graph block interval distribution.svg |
+| printchain2txt                  | chain_data_url:int                                      | -           | Saves the structure and information of all blocks in the chain to chain_data_url, default is 'Chain Data/chain_data.txt' |
+| CalculateStatistics             | rounds:int                                              | dict        | Generates blockchain statistics and returns the statistics through a dictionary, rounds is the total number of simulation rounds |
 
 ## Consensus
 
 This section introduces the consensus layer architecture of ChainXim, using Proof of Work (PoW) as an example to explain the implementation of consensus protocols in ChainXim. The Consensus class is an abstract class that describes the basic elements of the consensus layer in ChainXim. To implement a consensus protocol in ChainXim, a new consensus class needs to be extended from the Consensus class. The currently implemented consensus class is PoW. The following diagram shows the class diagram illustrating the relationship between PoW and Consensus.
 
-![consensus-pow](consensus-pow.svg)
+![consensus-pow](doc/consensus-pow.svg)
 
 Each PoW object contains the following attributes:
 
@@ -186,7 +186,7 @@ The PoW class simulates the block generation and validation behavior in the Proo
 
 The following diagram shows the inheritance and derivation relationships related to consensus in Chainxim. As shown in the figure, the PoW.BlockHead and PoW.Block classes are subclasses of the Consensus class, derived from data.BlockHead and data.Block. The BlockHead and Block classes of the Consensus class inherit from data.BlockHead and data.Block, respectively, and redefine the initialization interfaces of BlockHead and Block.
 
-![consensus-block](consensus-block.svg)
+![consensus-block](doc/consensus-block.svg)
 
 Consensus.BlockHead and Consensus.Block are initialized through the following interfaces.
 
@@ -244,7 +244,7 @@ In the current architecture, ChainXim theoretically supports Message and its der
 
 The following diagram shows the call relationships between different modules and methods in ChainXim:
 
-![message-lifecycle](message-lifecycle.svg)
+![message-lifecycle](doc/message-lifecycle.svg)
 
 Notably, the six bold methods are worth attention. consensus_process calls mining_consensus to generate a block. The new block is added to the miner's forwarding queue via launch_consensus calling forward. When diffuse is called each round, Miner.NIC.nic_forward is called to send the block into the simulated network to start the simulation. When a miner receives a new block, diffuse calls the miner's receive method to receive the block (the received block is temporarily stored in the reception buffer _receive_tape). At the beginning of each round, local_state_update verifies the blocks in _receive_tape one by one and updates them to the target miner's local chain. Note that the specific forwarding and receiving process of messages may vary slightly for different network types (see the [Network](#Network) section for details).
 
@@ -260,7 +260,7 @@ The diffuse method of the network class is called once at the end of each round,
 
 #### Updating the Local Chain
 
-Before BackboneProtocal calls launch_consensus, local_state_update will be called. For PoW consensus, this function's purpose is to verify the blocks cached in _receive_tape one by one and merge them into the local chain. If the merged chain is longer than the current main chain, it will be set as the main chain. The verification process is divided into two steps: the first step verifies the legality of the block itself, i.e., whether the block hash is less than the target value; the second step checks whether the parent block of the block can be retrieved from the local chain. If it can be retrieved, the legal new block is added to the local chain; otherwise, it is placed in _block_buffer to wait for its parent block to be received. When the parent block in _block_buffer is processed in local_state_update, synthesis_fork is called to merge the branch after this parent block into the local chain.
+Before BackboneProtocal calls launch_consensus, local_state_update will be called. For PoW consensus, this function's purpose is to verify the blocks cached in _receive_tape one by one and merge them into the local chain. If the merged chain is longer than the current main chain, it will be set as the main chain. The verification process is divided into two steps: the first step verifies the block itself, i.e., whether the block hash is less than the target value; the second step checks whether the parent block of the block can be retrieved from the local chain. If it can be retrieved, the valid new block is added to the local chain; otherwise, it is placed in _block_buffer to wait for its parent block to be received. When the parent block in _block_buffer is processed in local_state_update, synthesis_fork is called to merge the branch after this parent block into the local chain.
 
 ### How to Implement a New Consensus Protocol
 
@@ -305,7 +305,7 @@ Then you can directly construct such objects where ExtraMessage is needed, and t
     def receive_extra_message(self,extra_msg: ExtraMessage):
         if extra_msg_not_received_yet:
             self._receive_tape.append(extra_msg)
-            random.shuffle(self._receive_tape) # Shuffle the receive order
+            random.shuffle(self._receive_tape) # Shuffle the receiving order
             return True
         else:
             return False
@@ -378,7 +378,7 @@ MyConsensus.local_state_update needs to update the state of the consensus object
             elif ...:
                 ...
 ```
-The above code processes messages in `_receive_tape` based on their type. If the input is a block, it attempts to verify and merge it into the local chain. Generally, `local_state_update` needs to call the `valid_chain` method to verify the chain containing the input block, so you need to implement `valid_chain` and `valid_block` methods in `MyConsensus`. Typically, the `valid_chain` method checks the `prehash` of the blocks in the chain to ensure they correctly form a hash chain and calls `valid_block` to verify the legality of each block. You can refer to `PoW.valid_chain` for writing `valid_chain`.
+The above code processes messages in `_receive_tape` based on their type. If the input is a block, it attempts to verify and merge it into the local chain. Generally, `local_state_update` needs to call the `valid_chain` method to verify the chain containing the input block, so you need to implement `valid_chain` and `valid_block` methods in `MyConsensus`. Typically, the `valid_chain` method checks the `prehash` of the blocks in the chain to ensure they correctly form a hash chain and calls `valid_block` to verify each block. You can refer to `PoW.valid_chain` for writing `valid_chain`.
 
 Finally, if you need to make the consensus class `MyConsensus` configurable, you need to modify the `__init__` method and add configuration items in `system_config.ini`. The `__init__` method can refer to the following example:
 
@@ -517,8 +517,6 @@ For network interfaces without topology information, `NICWithoutTp`, in the abov
 | getdata         | inv:INVMsg                           |Responds to `inv` messages, requesting missing blocks.                      |
 | get_reply       | msg_name, target:int, err:str, round |The original miner gets the result of the message sent to the target miner, whether it was successful or failed. |
 
-
-
 ## Network
 The main function of the network layer is to receive new blocks generated in the environment and transmit them to other miners through certain propagation rules, serving as a communication channel between miners. The network layer is derived from the abstract base class Network to create different types of networks. Currently, the implemented networks include the abstract concept of Synchronous Network, Stochastic Propagation Network, Deterministic Propagation Network, and relatively realistic Topology P2P Network.
 
@@ -538,7 +536,7 @@ After message objects enter the network through access_network, they are encapsu
 - In SynchronousNetwork, it only includes the message object and the miner ID that generated the message;
 - In StochPropNetwork, it also includes the current reception probability;
 - In DeterPropNetwork, it records the propagation vector;
-- In TopologyNetwork, it records the source, target, and other information of the message.
+- In TopologyNetwork, it records the source and target of the message.
 
 Taking PacketPVNet in TopologyNetwork as an example:
 
@@ -590,7 +588,7 @@ For example, with rcvprob_start=rcvprob_inc=0.2, all other miners will definitel
 | -------- | -------- | -------- |
 | set_net_param   | \*args, \*\*kargs      | Set rcvprob_start, rcvprob_inc    |
 | access_network   | new_msg:list[Message], minerid:int,<br>round:int     | Encapsulate the message object, miner id, and current round into PacketBDNet and add it to network_tape. Initialize the reception probability of the packet and record the propagation process. |
-| diffuse   | round:int     | Each Packet in network_tape is received by miners with an increasing probability, and the current reception probability is updated in PacketBDNet. When all miners have received it, remove it from network_tape and save the propagation process in network log.txt.<br>**Note: When sent to an attacker, other attackers also receive it immediately**|
+| diffuse   | round:int     | Each Packet in network_tape is received by miners with an increasing probability, and the current reception probability is updated in PacketBDNet. When all miners have received it, remove it from network_tape and save the propagation process in network log.txt.<br>**Note: When sent to an attacker, the other attackers also receive it immediately** |
 
 **Important Functions**
 
@@ -615,7 +613,7 @@ Given a propagation vector, the network sends message objects to a fixed proport
 | -------- | -------- | -------- |
 | set_net_param   | \*args, \*\*kargs      | Set prop_vector   |
 | access_network   | new_msg:list[Message], minerid:int,<br>round:int     | Encapsulate all new messages, miner id, and current round into data packets (PacketPVNet) and add them to network_tape. Initialize the propagation vector of the data packet and record the propagation process. |
-| diffuse   | round:int     |  According to the propagation vector, propagate the data packet to a fixed proportion of miners in each round.<br>**Note: When sent to an attacker, other attackers also receive it immediately, which may result in an inconsistent proportion.** |
+| diffuse   | round:int     | According to the propagation vector, propagate the data packet to a fixed proportion of miners in each round.<br>**Note: When sent to an attacker, the other attackers also receive it immediately, which may result in an inconsistent receiving proportion at some rounds.** |
 
 **Important Functions**
 
@@ -689,7 +687,7 @@ def forward_process(self, round):
 
 | Function | Parameters | Description |
 | -------- | -------- | -------- |
-| cal_delay   |  msg:Message, sourceid:int, targetid:int    | Calculate the delay between two miners, including transmission delay and processing delay. Round up and the minimum is 1 round.<br>The calculation formula is: `delay=trans_delay+process_delay, trans_delay=(blocksize*8)/bandwidth` |
+| cal_delay   |  msg:Message, sourceid:int, targetid:int    | Calculate the delay between two miners, including transmission delay and processing delay. <br>The calculation formula is: `delay=trans_delay+process_delay, trans_delay=(blocksize*8)/bandwidth` |
 | generate_network | -     | Generate the network according to network parameters. |
 | write_routing_to_json | -     | Whenever a block finishes propagation, record its routing result in a JSON file, including origin_miner and routing_history information. |
 | gen_routing_gragh_from_json | -     | Read the routing_history.json file and convert it into a routing_graph.svg image, saved in the Network Routing folder. |
@@ -722,12 +720,12 @@ Each message will be segmented before transmission, and each segment's transmiss
 | diffuse  | round:int    | Diffuse is divided into **receive_process** and **forward_process** |
 
 ## Attack
-Attackers perceive the environment, judge the current situation, and make attack behavior decisions to execute the optimal attack strategy. Currently, the attacker part has not yet implemented dynamic decision-making, and the parameters in system_config.ini need to be modified before running the simulator to set different attack strategies. (Content will be updated after the eclipse attack is fully implemented)
+Attackers perceive the environment, judge the current situation, and make attack decisions to execute the optimal attack strategy. Currently, the attacker part has not yet implemented dynamic decision-making, and the parameters in system_config.ini need to be modified before running the simulator to set different attack strategies. (Content will be updated after the eclipse attack is fully implemented)
 
 ### Interaction Logic Between Attack Layer and Overall System
-The following figure shows an example of the operation of the attack module in a certain round. The actual part of the attack module is shown within the dashed box. The t attackers are distributed among the miners (the numbers can be specified in system_config.ini). In each round, the attack module will only be triggered once, and each trigger will perform a complete attack action (for example, in PoW where all miners have the same number of hash calculations q per round, each attack action can perform t*q hash calculations). **In the current version, attackers will be triggered at random positions each round to prevent attackers from being triggered at fixed positions, which could affect fairness.** The attack module mainly interacts with the network and the environment. The main content of interaction with the environment is to perceive the current "situation" and upload blocks to the global chain; the content of interaction with the network is mainly to send blocks to the network. The specific interaction content of the attack module is detailed in the sections "Implementation of Important Abstract Classes" and "Invocation Methods and Specific Implementations."
+The following figure shows an example of the operation of the attack module in a certain round. The actual part of the attack module is shown within the dashed box. The t attackers are distributed among the miners (the numbers can be specified in system_config.ini). In each round, the attack module will only be triggered once, and each trigger will perform a complete attack action (for example, in PoW where all miners have the same number of hash calculations q per round, each attack action can perform t*q hash calculations). **In the current version, attackers will be triggered at random positions each round to prevent attackers from being triggered at fixed positions, which could affect fairness.** The attack module mainly interacts with the network and the environment. The main content of interaction with the environment is to perceive the current "situation" and upload blocks to the global chain; the content of interaction with the network is mainly to send blocks to the network. 
 
-<img src="attack.png" alt="attack" width="600" />
+<img src="doc/attack.png" alt="attack" width="600" />
 
 ### Implemented Attack Types
 - Honest Mining
@@ -750,25 +748,25 @@ The following figure shows an example of the operation of the attack module in a
 
 ### _adversary.py & adversary.py
 
-_adversary.py provides the abstract parent class Adversary, which is inherited by the Adversary provided in adversary.py. The environment imports the Adversary class from adversary.py and creates an object, then initializes all Adversary settings based on the environment parameters. This Adversary object acts as an abstraction representing all attackers and executes attacks.
+_adversary.py provides the abstract parent class Adversary, which is inherited by the Adversary provided in adversary.py. The environment creates an Adversary object, then initializes all Adversary settings based on the environment parameters. This Adversary object acts as the abstraction of all attackers and executes attacks.
 
 #### >>> _adversary.py & adversary.py Member Variables
 ##### Internal Member Variables
 
-| Member Variable         | Type               | Explanation                                                                                                   |
-| ----------------------- | ------------------ |------------------------------------------------------------------------------------------------------------ |
+| Member Variable         | Type               | Explanation                                                  |
+| ----------------------- | ------------------ | ------------------------------------------------------------ |
 | __Miner_ID              | int                | Value is -1, unchanged. During initialization, similar to ordinary miners, Adversary also needs to initialize consensus, so a unique ID is required. |
-| __adver_num             | int                | Records the number of attackers.                                                                                                             |
-| __attack_type           | class: AttackType  | Creates an attack type object based on the settings, defaults to HonestMining if not set.                                                                                                            |
-| __eclipse               | bool               | Records whether to execute an eclipse attack.                                                                                                              |
-| __eclipse_attack        | class: AttackType  | If executing an eclipse attack, creates an Eclipse object; otherwise, it is None. When creating an eclipse attack, the internal initialization will record the above attack type object to implement the eclipse attack with a specific attack type.                                                                                                             |
-| __adver_ids             | list[int]          | Records the list of attacker IDs.                                                                                                              |
-| __miner_list            | list[class: Miner] | Records the list of all miners.                                                                                                              |
-| __network_type          | class: Network     | Records the current network type object, created by the environment and passed to Adversary.                                                                                                              |
-| __global_chain          | class: Chain       | Records the current global chain object, created by the environment and passed to Adversary.                                                                                                              |
-| __adver_consensus_param | dict               | Records the parameters required by the consensus object executed by the attackers in the form of a dict.                                                                                                              |
-| __consensus_type        | class: Consensus   | Creates a consensus type object based on the settings.                                                                                                              |
-| __attack_arg            | dict               | Records the attack parameters. (Currently, only DoubleSpending requires this parameter.)                                                                                                              |
+| __adver_num             | int                | Records the number of attackers.                             |
+| __attack_type           | class: AttackType  | Creates an attack type object based on the settings, defaults to HonestMining if not set. |
+| __eclipse               | bool               | Records whether to execute an eclipse attack.                |
+| __eclipse_attack        | class: AttackType  | If executing an eclipse attack, creates an Eclipse object; otherwise, it is None. When creating an eclipse attack, the internal initialization will record the above attack type object to implement the eclipse attack with a specific attack type. |
+| __adver_ids             | list[int]          | Records the list of attacker IDs.                            |
+| __miner_list            | list[class: Miner] | Records the list of all miners.                              |
+| __network_type          | class: Network     | Records the current network type object, created by the environment and passed to Adversary. |
+| __global_chain          | class: Chain       | Records the current global chain object, created by the environment and passed to Adversary. |
+| __adver_consensus_param | dict               | Records the parameters required by the attackers' consensus object in the form of a dict. |
+| __consensus_type        | class: Consensus   | Creates a consensus object based on the settings.            |
+| __attack_arg            | dict               | Records the attack parameters. (Currently, only DoubleSpending requires this parameter.) |
 #### >>> _adversary.py & adversary.py Member Methods
 ##### Internal Methods
 
@@ -790,10 +788,10 @@ _adversary.py provides the abstract parent class Adversary, which is inherited b
 | get_eclipse() | None | __eclipse: bool | Returns whether the eclipse attack is enabled. |
 | get_adver_q() | None | __consensus_type.q: int | Returns the computing power q of the attacker group. |
 | excute_per_round(round) | round: int | None | The main method of Adversary, executing the attack, will call the corresponding attack type object's member methods. |
-| get_info() | None | None or __attack_type.info_getter() | Calls the corresponding attack type object's member method to get the current information, generally including success rate (or main chain quality) and the corresponding theoretical value. |
+| get_info() | None | None or __attack_type.info_getter() | Calls the corresponding attack type object's member method to get the current information, usually including success rate (or main chain quality) and the corresponding theoretical value. |
 
 ### _atomization_behavior.py & atomization_behavior.py
-_atomization_behavior.py is the parent class, and atomization_behavior.py inherits from it, implementing specific Atomization Behavior (AB). The parent class is defined because AB has behaviors that must be implemented, providing a behavior standard that forms the basis of the attack. Additional functionalities can be added directly in the inheriting class. Since this inheriting class is a method class without member variables, the following details the methods of AB (not in table form).
+_atomization_behavior.py is the parent class, and atomization_behavior.py inherits from it, implementing specific Atomization Behavior (AB). The parent class is defined because AB has behaviors that must be implemented, providing a behavior standard that forms the basis of the attack. Additional functionalities can be added directly in the inheriting class. Since this inheriting class is a method class without member variables, the following paragraphs details the methods of AB (not in table form).
 
 #### Atomization Behavior
 
@@ -802,7 +800,7 @@ The purpose of renew is to update all blockchain states of the attacker: the ref
 
 In renew, the attacker iterates through each miner it controls. All miners perform local_state_update like honest miners (see [Consensus Section](#How-to-Implement-a-New-Consensus-Protocol)). The dictionary is updated based on the results of local_state_update.
 
-If there is an update, the newly generated block is updated to the reference chain and the global chain. The former serves as the reference for the attack (the latest chain from the attacker's perspective), and the latter is recorded in the global chain as the blockchain maintainer's duty.
+If there is an update, the newly generated block is updated to the reference chain and the global chain. The former serves as the reference for the attack (the latest chain from the attacker's perspective), and the latter is recorded in the global chain.
 
 Summary: renew requires at least the following three parts:
 * Perform local_state_update for each attacker miner.
@@ -816,7 +814,7 @@ mine calls the current consensus method and performs the mining function corresp
 
 If a block is generated, the attack chain (adver_chain) and the global chain are updated.
 
-All attackers are iterated through to update the block to the attacker's _receive_tape. The purpose is twofold: to allow attackers to share the block directly (received in the next round) and to update the block to the reference chain in the next round.
+All attackers are iterated to update the block to the attacker's _receive_tape. The purpose is twofold: to allow attackers to share the block directly (received in the next round) and to update the block to the reference chain in the next round.
 
 The content of the mine module generally does not change significantly because its main function is to call the consensus mining function and update the corresponding blockchain based on the results.
 
@@ -824,13 +822,13 @@ The content of the mine module generally does not change significantly because i
 Upload Adversary's block to the network.
 
 #### >>> 4. adopt()
-adopt is used to update the results of the reference chain (honest_chain) to the attack chain (adver_chain). The attack chain can be seen as a chain jointly supported by the attack group, rather than the individual chains of each malicious miner, so each malicious miner's local chain needs to be updated.
+adopt is used to update the results of the reference chain (honest_chain) to the attack chain (adver_chain). The attack chain can be seen as a chain jointly maintained by the attack group, rather than the individual chains of each malicious miner, so each malicious miner's local chain needs to be updated.
 
 #### >>> 5. clear()
 Clear the input and communication content of all miners in the attacker. The purpose of designing clear is to eliminate the impact of the current round's input on the next round, so clear should be placed after a series of behaviors.
 
 #### >>> 6. wait()
-wait allows the attack module to wait until the next round to continue running. Therefore, no specific behavior is designed for the wait part, and no actual action will be taken when the attack instance reaches these operations.
+wait allows the attack module to wait until the next round to continue running. Therefore, no specific behavior is designed for the wait part, and no actual action will be taken when the attack instance executes these operations.
 
 ### attack_type.py & honest_mining.py, selfish_mining.py, double_spending
 #### >>> Member Variables in attack_type.py
@@ -841,7 +839,7 @@ Unspecified member variables have the same meaning as previously described.
 | behavior | class: AtomizationBehavior | Records the AtomizationBehavior type method class object. |
 | global_chain | class: Chain | -------- |
 | honest_chain | class: Chain | The honest chain updated from the Adversary's perspective. The Adversary generally does not perform additional operations on it other than updating the blocks of honest nodes. It is also the reference for updating adver_chain when the Adversary gives up the attack. |
-| adver_chain | class: Chain | The local chain of the Adversary, which generally does not remain consistent with the honest_chain. |
+| adver_chain | class: Chain | The local chain of the Adversary, which is generally inconsistent with the honest_chain. |
 | miner_list | list[class: Miner] | -------- |
 | adver_list | list[class: Miner] | -------- |
 | network_type | class: Network | -------- |
@@ -882,7 +880,7 @@ def renew_stage(self,round):
                  honest_chain = self.honest_chain,round = round)
     return newest_block, mine_input
 ```
-As shown in the source code of the renew stage above, the renew stage needs to return two parameters: one is `newest_block` and the other is `mine_input`. The renew stage mainly revolves around the `renew()` method.
+As shown in the source code of the renew stage above, the renew stage needs to return two parameters: one is `newest_block` and the other is `mine_input`. The renew stage is mainly completed in the `renew()` method.
 
 ##### >>> Attack Stage:
 ```python=
@@ -906,13 +904,13 @@ In the attack stage, Adversary needs to execute `adopt()`, `mine()`, `upload()`,
 ```python=
 def clear_record_stage(self,round):
     ## 3. clear and record stage
-    self.behavior.clear(miner_list = self.adver_list)# 清空
+    self.behavior.clear(miner_list = self.adver_list)
     self.__log['round'] = round
     self.__log['honest_chain'] = self.honest_chain.lastblock.name + ' Height:' + str(self.honest_chain.lastblock.height)
     self.__log['adver_chain'] = self.adver_chain.lastblock.name + ' Height:' + str(self.adver_chain.lastblock.height)
     self.resultlog2txt()
 ```
-This stage is relatively simple, mainly calling the `clear()` method to clear redundant data inside the miners and recording some necessary information into the log dictionary.
+This stage is relatively simple, mainly calling the `clear()` method to clear redundant data inside the miners and recording some necessary information in the log dictionary.
 
 ### eclipse.py
 
@@ -963,11 +961,9 @@ The corresponding function implementations in `external.py` are as follows:
 | - | - | - | - |
 | common_prefix | prefix1:Block, prefix2:Chain | Common prefix prefix1 | Calculate the common prefix of two blockchains |
 | chain_quality | blockchain:Chain | Dictionary cq_dict; index chain_quality_property | Statistics on the proportion of blocks produced by malicious nodes |
-| chain_growth | blockchain:Chain | Blockchain height | Obtain the length growth of the blockchain (i.e., blockchain height) |
+| chain_growth | blockchain:Chain | Blockchain height | Obtain the growth rate  of the blockchain (i.e., blockchain height) |
 
-Note that both `common_prefix` and `chain_growth` only implement part of the corresponding properties: `common_prefix` only calculates the common prefix of two blockchains, while the consistency index statistics are performed at the end of each round, and `chain_growth` only returns the blockchain height, while the calculation of the chain growth rate is completed in the `CalculateStatistics` function. **(Note: In subsequent updates, we may improve the form of this part of the code.)**
-
-
+Note that both `common_prefix` and `chain_growth` only implement part of the corresponding properties: `common_prefix` only calculates the common prefix of two blockchains, while the consistency rate is calculated with the log generated during the simulation, and `chain_growth` only returns the blockchain height, while the calculation of the chain growth rate is completed in the `CalculateStatistics` function. 
 
 
 For more detailed explanations of the above three indicators, refer to:
