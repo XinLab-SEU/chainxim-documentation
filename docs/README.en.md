@@ -8,7 +8,7 @@ ChainXim is a blockchain simulator developed by XinLab to simulate and verify bl
 ### Download
 You can clone the Github repository with git.
 
-Git clone command: `https://github.com/XinLab-SEU/ChainXim.git`
+Git clone command: `git clone https://github.com/XinLab-SEU/ChainXim.git`
 
 Or you can download the master branch from the ChainXim code repository: [master.zip](https://github.com/XinLab-SEU/ChainXim/archive/refs/heads/master.zip)
 
@@ -619,6 +619,7 @@ The green curve Theory Shift 10% is obtained by shifting the Theory curve to the
     - The $TP_2$ matrix is as shown below (isolated nodes are 16, 17, 18, 19):
         ![matrix_tp2](https://hackmd.io/_uploads/Syvz-HT-p.png)
         
+
 **Note: When setting attackers, please avoid isolated nodes and set them manually.**
 
 

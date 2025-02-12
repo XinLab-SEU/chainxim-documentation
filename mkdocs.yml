@@ -13,12 +13,12 @@ plugins:
         - locale: en
           name: English
           build: true
-          link: /chainxim-doc/en/
+          link: /chainxim-documentation/en/
         - locale: zh
           name: 简体中文
           default: true
           build: true
-          link: /chainxim-doc/
+          link: /chainxim-documentation/
 
 markdown_extensions:
   - tables
