@@ -6,6 +6,9 @@ ChainXim is a blockchain simulator developed by XinLab to simulate and verify bl
 
 ## Quick Start
 ### Download
+
+ChainXim repository: [https://github.com/XinLab-SEU/ChainXim](https://github.com/XinLab-SEU/ChainXim)
+
 You can clone the Github repository with git.
 
 Git clone command: `git clone https://github.com/XinLab-SEU/ChainXim.git`
