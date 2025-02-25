@@ -139,7 +139,7 @@ Attack Execute Type: execute_sample1
 区块链可视化矢量图（[blockchain_visualization/Blockchain Structure.gv.svg](doc/Blockchain-Structure.svg)）
 <br><br/>
 
-<img src="doc/Blockchain-Structure.svg" alt="Blockchain-Structure" height="600" />
+![Blockchain-Structure](doc/Blockchain-Structure.svg)
 <br><br/>
 
 图中红色区块由攻击者产生，蓝色区块由诚实矿工产生。

@@ -733,7 +733,7 @@ Attackers perceive the environment, judge the current situation, and make attack
 ### Interaction Logic Between Attack Layer and Overall System
 The following figure shows an example of the operation of the attack module in a certain round. The actual part of the attack module is shown within the dashed box. The t attackers are distributed among the miners (the numbers can be specified in system_config.ini). In each round, the attack module will only be triggered once, and each trigger will perform a complete attack action (for example, in PoW where all miners have the same number of hash calculations q per round, each attack action can perform t*q hash calculations). **In the current version, attackers will be triggered at random positions each round to prevent attackers from being triggered at fixed positions, which could affect fairness.** The attack module mainly interacts with the network and the environment. The main content of interaction with the environment is to perceive the current "situation" and upload blocks to the global chain; the content of interaction with the network is mainly to send blocks to the network. 
 
-<img src="doc/attack.png" alt="attack" width="600" />
+![attack](doc/attack.png)
 
 ### Implemented Attack Types
 - Honest Mining

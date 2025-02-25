@@ -25,6 +25,8 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.arithmatex:
       generic: true
+  - toc:
+      slugify: !!python/object/apply:pymdownx.slugs.slugify {}
 
 extra_javascript:
   - javascripts/mathjax.js
