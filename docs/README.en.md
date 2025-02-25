@@ -426,7 +426,7 @@ At the end of each round, the height difference of the local chains of all nodes
 <iframe
  height=850px
  width=850px
- src="doc/cp_pdf.html"  
+ src="/chainxim-documentation/doc/cp_pdf.html"  
  frameborder=0 
  display:block>
  </iframe>
