@@ -139,7 +139,7 @@ Attack Execute Type: execute_sample1
 区块链可视化矢量图（[blockchain_visualization/Blockchain Structure.gv.svg](doc/Blockchain-Structure.svg)）
 <br><br/>
 
-![Blockchain-Structure](doc/Blockchain-Structure.svg)
+![Blockchain-Structure](doc/Blockchain-Structure.svg){: style="height: 400px"}
 <br><br/>
 
 图中红色区块由攻击者产生，蓝色区块由诚实矿工产生。
@@ -364,7 +364,7 @@ Results/20230819-232107/
 
 * 网络参数：SynchronousNetwork
 
-![block_time](doc/block_time.png)
+![block_time](doc/block_time.png){: style="height: 460px"}
 
 
 ### 双花攻击成功率
@@ -382,7 +382,7 @@ Results/20230819-232107/
 
 * 网络参数：四种网络参数均为默认
 
-![double_spend_success_rate](doc/double_spend_success_rate.png)
+![double_spend_success_rate](doc/double_spend_success_rate.png){: style="height: 460px"}
 
 ---
 
@@ -408,12 +408,12 @@ Results/20230819-232107/
 ---
 分叉率/孤块率与吞吐量随最大传播时延的变化示意图
 
-![latency-throughput](doc/latency-throughput.svg)
+![latency-throughput](doc/latency-throughput.svg){: style="height: 460px"}
 
 ---
 一致性指标随最大传播时延的变化示意图
 
-![cp_bounded_delay](doc/cp_bounded_delay.svg)
+![cp_bounded_delay](doc/cp_bounded_delay.svg){: style="height: 460px"}
 
 图中，Common Prefix[0]、[1]、[2]分别代表共同前缀PDF的前三个分量,其中序数代表共同前缀与主链长度的差值（详见“仿真器输出”一节）。
 
@@ -430,14 +430,20 @@ Results/20230819-232107/
 
 每轮结束时，所有节点的本地链相对共同前缀的高度差以及其对Common Prefix PDF的影响如下图所示。下方时间轴是发生链尾切换事件的轮次，上x轴是区块高度/common prefix后的区块长度（suffix length），y轴是矿工ID。图中的热度值指代的是每个矿工本地链链尾与共同前缀的距离达到Suffix Length的累积次数。图中BXX指代区块编号，代表矿工在当前轮次本地链链尾的状态，下x轴指代这些区块所在的高度。点击Play开始播放动画，可以观察到区块在共同前缀的下一高度产生，然后扩散到其他矿工，最后导致共同前缀高度+1。
 
-<iframe  
- height=850 
- width=100% 
- src="doc/cp_pdf.html"  
- frameborder=0  
- allowfullscreen>
- </iframe>
+<style>
+	.iframe-body-sty{position: relative;overflow: hidden;height:850px;width: 850px;background-color: white;
+    transform: scale(0.8); transform-origin:0 0; margin-bottom: -170px}
+</style>
 
+<div class="iframe-body-sty">
+<iframe
+ height=850px
+ width=850px
+ src="doc/cp_pdf.html"  
+ frameborder=0 
+ display:block>
+ </iframe>
+</div>
 
 
 ### 不同区块大小下的分叉率、孤块率、吞吐量与一致性
@@ -451,12 +457,12 @@ Results/20230819-232107/
 
 ---
 分叉率/孤块率与吞吐量随区块大小的变化示意图
-![blocksize_simulation](doc/blocksize_simulation.png)
+![blocksize_simulation](doc/blocksize_simulation.png){: style="height: 460px"}
 
 
 ---
 一致性指标随区块大小的变化示意图
-![blocksize_common_prefix](doc/blocksize_common_prefix.png)
+![blocksize_common_prefix](doc/blocksize_common_prefix.png){: style="height: 460px"}
 
 
 图中，Common Prefix[0]、[1]、[2]分别代表共同前缀PDF的前三个分量，其中序数代表共同前缀与主链长度的差值（详见“仿真器输出”一节）。
@@ -474,7 +480,7 @@ Results/20230819-232107/
 ---
 传播时延与90%有效吞吐量随区块大小的变化示意图
 
-![latency_effective_throughput90](doc/latency_effective_throughput90.svg)
+![latency_effective_throughput90](doc/latency_effective_throughput90.svg){: style="height: 460px"}
 
 **注：X%有效吞吐量=区块大小/(X%区块传播时延)**
 
@@ -483,7 +489,7 @@ Results/20230819-232107/
 
 #### 1. 算力攻击（honest mining）
 
-![honest_mining](doc/honest_mining.png)
+![honest_mining](doc/honest_mining.png){: style="height: 460px"}
 
 ##### **四种不同网络对算力攻击的影响示意图**
 一次攻击成功的定义：攻击者产出区块，并被网络接受。
@@ -508,7 +514,7 @@ Results/20230819-232107/
 #### 2. 区块截留攻击（selfish mining）
 ##### **四种不同网络对区块截留攻击的影响示意图**
 
-![selfish_mining](doc/selfish_mining.png)
+![selfish_mining](doc/selfish_mining.png){: style="height: 460px"}
 
 纵坐标为链质量指标，即最终攻击者产出区块在主链中的占比。
 
@@ -525,7 +531,7 @@ Results/20230819-232107/
 
 ##### **矿工不同择链策略对区块截留攻击的影响示意图**
 
-![selfish_mining_2](doc/selfish_mining_2.png)
+![selfish_mining_2](doc/selfish_mining_2.png){: style="height: 460px"}
 
 图中的理论区域由以下公式得到：
 
@@ -552,7 +558,7 @@ $$ R=\frac{4\alpha^{2}(1-\alpha)^{2}-\alpha^{3}}{1-\alpha(1+(2-\alpha)\alpha)} $
 
 ##### **不同网络对双花攻击的影响示意图**
 
-![doublespending](doc/doublespending.png)
+![doublespending](doc/doublespending.png){: style="height: 460px"}
 
 **参数设置如下：**
 
@@ -566,7 +572,7 @@ $$ R=\frac{4\alpha^{2}(1-\alpha)^{2}-\alpha^{3}}{1-\alpha(1+(2-\alpha)\alpha)} $
 ---
 ##### **不同策略对双花攻击的影响与理论对比示意图**
 
-![double_spending](doc/double_spending.png)
+![double_spending](doc/double_spending.png){: style="height: 460px"}
 
 图中的理论曲线由以下公式得到：
 
@@ -594,11 +600,11 @@ $\beta$为攻击者与诚实矿工算力之比，$0\leqslant\beta\leqslant1$。
 
 ##### **受日蚀攻击影响下的双花攻击示意图**
 
-![eclipse1](doc/eclipse1.png)
+![eclipse1](doc/eclipse1.png){: style="height: 460px"}
 
 图中绿色曲线 Theory Shift 10% 为曲线 Theory向左平移一个单位得到。
 
-![eclipse2](doc/eclipse2.png)
+![eclipse2](doc/eclipse2.png){: style="height: 460px"}
 
 **参数设置如下：**
 

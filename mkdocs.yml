@@ -22,6 +22,7 @@ plugins:
 
 markdown_extensions:
   - tables
+  - attr_list
   - pymdownx.superfences
   - pymdownx.arithmatex:
       generic: true
